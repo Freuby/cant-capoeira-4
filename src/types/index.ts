@@ -11,7 +11,7 @@ export interface Song {
 
 export interface PrompterSettings {
   rotationInterval: number;
-  fontSize: 'small' | 'medium' | 'large';
+  fontSize: 'small' | 'medium' | 'large' | 'xlarge';
   isDarkMode: boolean;
   useHighContrast: boolean;
   upperCase: boolean;
@@ -27,4 +27,5 @@ export const FONT_SIZES = {
   small: '1.5rem',
   medium: '2rem',
   large: '2.5rem',
+  xlarge: '3rem',
 } as const;

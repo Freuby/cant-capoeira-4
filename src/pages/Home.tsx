@@ -10,11 +10,11 @@ const CategorySection: React.FC<{
   title: string;
   category: SongCategory;
   color: string;
-}> = ({ title, category, color }) => {
+}> = React.memo(({ title, category, color }) => {
   const { songs } = useSongs();
   const categorySongs = songs
     .filter(song => song.category === category)
-    .sort((a, b) => a.title.localeCompare(b, 'fr'));
+    .sort((a, b) => a.title.localeCompare(b.title, 'fr'));
 
   return (
     <section className="mb-8">
@@ -33,7 +33,7 @@ const CategorySection: React.FC<{
       </div>
     </section>
   );
-};
+});
 
 export const Home = () => {
   const { selectedSongs, deleteSelectedSongs, clearSelection, songs, importSongs, deleteAllSongs } = useSongs();

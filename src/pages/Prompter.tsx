@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RotateCcw, Settings, Home } from 'lucide-react';
+import { RotateCcw, Settings, Home, Music } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSongs } from '../context/SongContext';
 import { Song, CATEGORY_COLORS, FONT_SIZES } from '../types';
@@ -11,15 +11,15 @@ const PrompterSong: React.FC<{
   upperCase: boolean;
   isDarkMode: boolean;
   useHighContrast: boolean;
-}> = ({ song, onClick, fontSize, upperCase, isDarkMode, useHighContrast }) => {
+}> = React.memo(({ song, onClick, fontSize, upperCase, isDarkMode, useHighContrast }) => {
   if (!song) return null;
 
-  const text = upperCase ? 
-    (song.mnemonic || song.title).toUpperCase() : 
+  const text = upperCase ?
+    (song.mnemonic || song.title).toUpperCase() :
     (song.mnemonic || song.title);
 
-  const textColor = useHighContrast ? 
-    (isDarkMode ? 'text-white' : 'text-black') : 
+  const textColor = useHighContrast ?
+    (isDarkMode ? 'text-white' : 'text-black') :
     'text-black';
 
   return (
@@ -32,7 +32,7 @@ const PrompterSong: React.FC<{
       }}
     >
       <div className="h-full flex flex-col justify-center items-center text-center">
-        <h2 
+        <h2
           className={`font-bold ${textColor}`}
           style={{ fontSize }}
         >
@@ -41,7 +41,7 @@ const PrompterSong: React.FC<{
       </div>
     </div>
   );
-};
+});
 
 export const Prompter = () => {
   const navigate = useNavigate();
@@ -65,18 +65,23 @@ export const Prompter = () => {
   }, [generateSongs]);
 
   useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && 'wakeLock' in navigator) {
+        try {
+          const newLock = await navigator.wakeLock.request('screen');
+          setWakeLock(newLock);
+        } catch (err) {
+          console.debug('Impossible de réactiver le verrouillage d\'écran:', err);
+        }
+      }
+    };
+
     const requestWakeLock = async () => {
       try {
         if ('wakeLock' in navigator && document.visibilityState === 'visible') {
           const lock = await navigator.wakeLock.request('screen');
           setWakeLock(lock);
-
-          document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'visible' && !wakeLock) {
-              const newLock = await navigator.wakeLock.request('screen');
-              setWakeLock(newLock);
-            }
-          });
+          document.addEventListener('visibilitychange', handleVisibilityChange);
         }
       } catch (err) {
         console.debug('Verrouillage d\'écran non disponible:', err);
@@ -86,12 +91,13 @@ export const Prompter = () => {
     requestWakeLock();
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (wakeLock) {
-        wakeLock.release();
+        wakeLock.release().catch(() => {});
         setWakeLock(null);
       }
     };
-  }, []);
+  }, [wakeLock]);
 
   useEffect(() => {
     const timer = setInterval(() => {
